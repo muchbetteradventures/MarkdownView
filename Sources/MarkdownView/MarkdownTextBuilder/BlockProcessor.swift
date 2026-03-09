@@ -45,12 +45,16 @@ final class BlockProcessor {
         self.blockquoteDrawing = blockquoteDrawing
     }
 
-    func processHeading(level _: Int, contents: [MarkdownInlineNode]) -> NSAttributedString {
-        let font: PlatformFont = theme.fonts.title
+    func processHeading(level: Int, contents: [MarkdownInlineNode]) -> NSAttributedString {
+        // Scale heading font: h1=2em, h2=1.5em, h3=1.25em, h4=1em, h5=.875em, h6=.85em
+        let scales: [CGFloat] = [2.0, 1.5, 1.25, 1.0, 0.875, 0.85]
+        let scale = scales[min(max(level - 1, 0), scales.count - 1)]
+        let baseSize = theme.fonts.body.pointSize
+        let font: PlatformFont = theme.fonts.title.withSize(baseSize * scale)
 
         return buildWithParagraphSync { paragraph in
             paragraph.paragraphSpacing = 16
-            paragraph.paragraphSpacingBefore = 16
+            paragraph.paragraphSpacingBefore = level <= 2 ? 24 : 16
         } content: {
             let string = contents.render(theme: theme, context: context, viewProvider: viewProvider)
             string.addAttributes(
