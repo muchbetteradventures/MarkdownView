@@ -19,7 +19,7 @@ let package = Package(
         .library(name: "WatchMarkdownView", targets: ["WatchMarkdownView"]),
     ],
     dependencies: [
-        .package(path: "../Litext"),
+        .package(url: "https://github.com/muchbetteradventures/Litext.git", branch: "main"),
         .package(url: "https://github.com/mgriebling/SwiftMath", from: "1.7.3"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.3.0"),
         .package(url: "https://github.com/raspu/Highlightr", from: "2.3.0"),
