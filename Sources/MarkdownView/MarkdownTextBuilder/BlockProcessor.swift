@@ -103,15 +103,18 @@ final class BlockProcessor {
         codeView.highlightMap = highlightMap
         codeView.content = content
         let drawer = codeDrawing!
+        let height = CodeView.intrinsicHeight(for: content, theme: theme)
+        let attachment = LTXAttachment.hold(attrString: .init(string: content + "\n"))
+        attachment.size = CGSize(width: 1, height: height)
         let text = buildWithParagraphSync { paragraph in
-            let height = CodeView.intrinsicHeight(for: content, theme: theme)
             paragraph.minimumLineHeight = height
         } content: {
             .init(string: LTXReplacementText, attributes: [
                 .font: theme.fonts.body,
-                .ltxAttachment: LTXAttachment.hold(attrString: .init(string: content + "\n")),
+                .ltxAttachment: attachment,
                 .ltxLineDrawingCallback: LTXLineDrawingAction { drawer($0, $1, $2) },
                 .contextView: codeView,
+                NSAttributedString.Key(kCTRunDelegateAttributeName as String): attachment.runDelegate,
             ])
         }
         return (text, codeView)
@@ -184,15 +187,19 @@ final class BlockProcessor {
         let representedText = NSAttributedString(string: allContent + "\n")
         tableView.setContents(contents)
         let drawer = tableDrawing!
+        let tableHeight = tableView.intrinsicContentHeight
+        let attachment = LTXAttachment.hold(attrString: representedText)
+        attachment.size = CGSize(width: 1, height: tableHeight)
 
         let text = buildWithParagraphSync { paragraph in
-            paragraph.minimumLineHeight = tableView.intrinsicContentHeight
+            paragraph.minimumLineHeight = tableHeight
         } content: {
             .init(string: LTXReplacementText, attributes: [
                 .font: theme.fonts.body,
-                .ltxAttachment: LTXAttachment.hold(attrString: representedText),
+                .ltxAttachment: attachment,
                 .ltxLineDrawingCallback: LTXLineDrawingAction { drawer($0, $1, $2) },
                 .contextView: tableView,
+                NSAttributedString.Key(kCTRunDelegateAttributeName as String): attachment.runDelegate,
             ])
         }
         return (text, tableView)
