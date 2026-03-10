@@ -232,12 +232,10 @@ import Litext
 
         // MARK: - UI Components
 
-        private lazy var scrollView: NSScrollView = {
-            let sv = NSScrollView()
-            sv.hasVerticalScroller = false
-            sv.hasHorizontalScroller = false
-            sv.drawsBackground = false
-            return sv
+        private lazy var containerView: NSView = {
+            let v = NSView()
+            v.wantsLayer = true
+            return v
         }()
 
         private lazy var gridView: GridView = .init()
@@ -286,8 +284,8 @@ import Litext
         // MARK: - Setup
 
         private func configureSubviews() {
-            addSubview(scrollView)
-            scrollView.documentView = gridView
+            addSubview(containerView)
+            containerView.addSubview(gridView)
         }
 
         func setContents(_ contents: [Rows]) {
@@ -318,10 +316,23 @@ import Litext
 
         // MARK: - Layout
 
+        override func scrollWheel(with event: NSEvent) {
+            // Find the enclosing page scroll view and forward scroll events to it
+            var view: NSView? = superview
+            while let v = view {
+                if let sv = v as? NSScrollView {
+                    sv.scrollWheel(with: event)
+                    return
+                }
+                view = v.superview
+            }
+            super.scrollWheel(with: event)
+        }
+
         override func layout() {
             super.layout()
 
-            scrollView.frame = bounds
+            containerView.frame = bounds
             gridView.frame = bounds
 
             layoutCells()
@@ -377,7 +388,7 @@ import Litext
             cellManager.setDelegate(self)
             cellManager.configureCells(
                 for: contents,
-                in: scrollView.documentView ?? self,
+                in: containerView,
                 cellPadding: cellPadding,
                 maximumCellWidth: maximumCellWidth
             )

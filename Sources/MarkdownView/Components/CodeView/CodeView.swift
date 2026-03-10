@@ -178,12 +178,10 @@ import Litext
         private var currentTaskIdentifier: UUID?
 
         lazy var barView: NSView = .init()
-        lazy var scrollView: NSScrollView = {
-            let sv = NSScrollView()
-            sv.hasVerticalScroller = false
-            sv.hasHorizontalScroller = false
-            sv.drawsBackground = false
-            return sv
+        lazy var scrollView: NSView = {
+            let v = NSView()
+            v.wantsLayer = true
+            return v
         }()
 
         lazy var languageLabel: NSTextField = {
@@ -216,6 +214,18 @@ import Litext
 
         static func intrinsicHeight(for content: String, theme: MarkdownTheme = .default) -> CGFloat {
             CodeViewConfiguration.intrinsicHeight(for: content, theme: theme)
+        }
+
+        override func scrollWheel(with event: NSEvent) {
+            var view: NSView? = superview
+            while let v = view {
+                if let sv = v as? NSScrollView {
+                    sv.scrollWheel(with: event)
+                    return
+                }
+                view = v.superview
+            }
+            super.scrollWheel(with: event)
         }
 
         override func layout() {

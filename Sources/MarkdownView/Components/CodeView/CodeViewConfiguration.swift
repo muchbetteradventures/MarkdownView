@@ -243,16 +243,6 @@ enum CodeViewConfiguration {
         }
 
         private func setupScrollView() {
-            scrollView.hasVerticalScroller = false
-            scrollView.hasHorizontalScroller = false
-            scrollView.drawsBackground = false
-            scrollView.automaticallyAdjustsContentInsets = false
-            scrollView.contentInsets = NSEdgeInsets(
-                top: CodeViewConfiguration.codePadding,
-                left: CodeViewConfiguration.codePadding,
-                bottom: CodeViewConfiguration.codePadding,
-                right: CodeViewConfiguration.codePadding
-            )
             addSubview(scrollView)
         }
 
@@ -262,7 +252,7 @@ enum CodeViewConfiguration {
             textView.preferredMaxLayoutWidth = .infinity
             textView.isSelectable = true
             textView.selectionBackgroundColor = theme.colors.selectionBackground
-            scrollView.documentView = textView
+            scrollView.addSubview(textView)
         }
 
         private func setupLineNumberView() {
@@ -334,6 +324,7 @@ enum CodeViewConfiguration {
         private func layoutScrollViewAndTextView(barHeight: CGFloat) {
             let textContentSize = textView.intrinsicContentSize
             let lineNumberWidth = lineNumberView.intrinsicContentSize.width
+            let padding = CodeViewConfiguration.codePadding
 
             scrollView.frame = CGRect(
                 x: lineNumberWidth,
@@ -343,9 +334,9 @@ enum CodeViewConfiguration {
             )
 
             textView.frame = CGRect(
-                x: 0,
-                y: 0,
-                width: max(scrollView.bounds.width - CodeViewConfiguration.codePadding * 2, textContentSize.width),
+                x: padding,
+                y: padding,
+                width: max(scrollView.bounds.width - padding * 2, textContentSize.width),
                 height: textContentSize.height
             )
         }
