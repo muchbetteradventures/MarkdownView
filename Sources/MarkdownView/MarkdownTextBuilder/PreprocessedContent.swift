@@ -13,6 +13,8 @@ public extension MarkdownTextView {
         public let blocks: [MarkdownBlockNode]
         public let rendered: RenderedTextContent.Map
         public let highlightMaps: [Int: CodeHighlighter.HighlightMap]
+        public var loadedImages: [String: PlatformImage] = [:]
+        public var contentWidth: CGFloat = 0
 
         public init(
             blocks: [MarkdownBlockNode],

@@ -95,15 +95,81 @@ extension MarkdownInlineNode {
                 range: NSRange(location: 0, length: ans.length)
             )
             return ans
-        case let .image(source, _): // children => alternative text can be ignored?
-            return NSAttributedString(
-                string: source,
-                attributes: [
-                    .link: source,
-                    .font: theme.fonts.body,
-                    .foregroundColor: theme.colors.body,
+        case let .image(source, children):
+            if let image = context.loadedImages[source] {
+                var imageSize = image.size
+                let maxWidth = context.contentWidth > 0 ? context.contentWidth : 600
+
+                // Scale to fit content width
+                if imageSize.width > maxWidth {
+                    let scale = maxWidth / imageSize.width
+                    imageSize = CGSize(width: maxWidth, height: imageSize.height * scale)
+                }
+
+                let capturedSize = imageSize
+                let capturedImage = image
+
+                let drawingCallback = LTXLineDrawingAction { cgContext, line, lineOrigin in
+                    let glyphRuns = CTLineGetGlyphRuns(line) as NSArray
+                    var runOffsetX: CGFloat = 0
+                    for i in 0 ..< glyphRuns.count {
+                        let run = glyphRuns[i] as! CTRun
+                        let attributes = CTRunGetAttributes(run) as! [NSAttributedString.Key: Any]
+                        if attributes[.contextIdentifier] as? String == source {
+                            break
+                        }
+                        runOffsetX += CTRunGetTypographicBounds(run, CFRange(location: 0, length: 0), nil, nil, nil)
+                    }
+
+                    let rect = CGRect(
+                        x: lineOrigin.x + runOffsetX,
+                        y: lineOrigin.y,
+                        width: capturedSize.width,
+                        height: capturedSize.height
+                    )
+
+                    cgContext.saveGState()
+                    #if canImport(UIKit)
+                        cgContext.translateBy(x: 0, y: rect.origin.y + rect.size.height)
+                        cgContext.scaleBy(x: 1, y: -1)
+                        cgContext.translateBy(x: 0, y: -rect.origin.y)
+                        capturedImage.draw(in: rect)
+                    #elseif canImport(AppKit)
+                        if let cgImage = capturedImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                            cgContext.draw(cgImage, in: rect)
+                        }
+                    #endif
+                    cgContext.restoreGState()
+                }
+
+                let altText = children.compactMap { if case .text(let t) = $0 { return t } else { return nil } }.joined()
+                let attachment = LTXAttachment.hold(attrString: .init(string: altText.isEmpty ? source : altText))
+                attachment.size = capturedSize
+
+                let attributes: [NSAttributedString.Key: Any] = [
+                    LTXAttachmentAttributeName: attachment,
+                    LTXLineDrawingCallbackName: drawingCallback,
+                    kCTRunDelegateAttributeName as NSAttributedString.Key: attachment.runDelegate,
+                    .contextIdentifier: source,
                 ]
-            )
+
+                return NSAttributedString(
+                    string: LTXReplacementText,
+                    attributes: attributes
+                )
+            } else {
+                // Fallback: show alt text or source as link
+                let altText = children.compactMap { if case .text(let t) = $0 { return t } else { return nil } }.joined()
+                let displayText = altText.isEmpty ? source : altText
+                return NSAttributedString(
+                    string: displayText,
+                    attributes: [
+                        .link: source,
+                        .font: theme.fonts.body,
+                        .foregroundColor: theme.colors.highlight,
+                    ]
+                )
+            }
         case let .math(content, replacementIdentifier):
             // Get LaTeX content from rendered context or fallback to raw content
             let latexContent = context.rendered[replacementIdentifier]?.text ?? content
