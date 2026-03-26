@@ -125,6 +125,7 @@ import MarkdownParser
             super.init(frame: .zero)
             textView.isSelectable = true
             textView.selectionBackgroundColor = theme.colors.selectionBackground
+            textView.delegate = self
             wantsLayer = true
             layer?.backgroundColor = NSColor.clear.cgColor
             textView.translatesAutoresizingMaskIntoConstraints = false
