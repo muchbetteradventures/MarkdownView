@@ -221,6 +221,12 @@ import Litext
 #elseif canImport(AppKit)
     import AppKit
 
+    /// A plain flipped container so subview frames laid out in `layoutCells()`
+    /// (row 0 at the top) aren't inverted by AppKit's default bottom-up origin.
+    private final class FlippedContainerView: NSView {
+        override var isFlipped: Bool { true }
+    }
+
     final class TableView: NSView {
         typealias Rows = [NSAttributedString]
 
@@ -233,7 +239,7 @@ import Litext
         // MARK: - UI Components
 
         private lazy var containerView: NSView = {
-            let v = NSView()
+            let v = FlippedContainerView()
             v.wantsLayer = true
             return v
         }()
